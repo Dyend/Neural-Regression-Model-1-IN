@@ -7,21 +7,22 @@ def csv_to_matrix(ruta):
     numpy_array = numpy.loadtxt(file, delimiter=",")
     return numpy_array
 
-def random_reorder(data):
+def random_reorder(data_x, data_y):
     print('reordenando')
     try:
-        len_columna = len(data[0]) - 1
+        len_columna_x = len(data_x[0]) - 1
         """ Swap las columnas de la matriz cantidad de columna * 2 veces"""
-        for i in range(1, len_columna * 2):
-            random_columna1 = randint(0, len_columna)
-            random_columna2 = randint(0, len_columna)
-            data[:,[random_columna1, random_columna2]] = data[:,[random_columna2, random_columna1]]
+        for i in range(1, len_columna_x * 2):
+            random_columna1 = randint(0, len_columna_x)
+            random_columna2 = randint(0, len_columna_x)
+            data_x[:,[random_columna1, random_columna2]] = data_x[:,[random_columna2, random_columna1]]
+            data_y[[random_columna1, random_columna2]] = data_y[[random_columna2, random_columna1]]
     except:
-        numpy.random.shuffle(data)
-    return data
+      print("error reorder")
+    return data_x, data_y
 
 def normalizer(data):
-    
+    print('normalizando')
     a = 0.01
     b = 0.99
     
@@ -42,12 +43,67 @@ def normalizer(data):
         normalized_data = numpy.array(normalized_data)
     return normalized_data
 
+def get_config():
+  config = csv_to_matrix("./data/config.csv")
+  p = config[0]
+  hn = config[1]
+  C = config[2]
+  return p,hn,C
+
+def generar_train(data, porcentaje_training,ruta):
+    print('generando archivo ' + ruta)
+    try:
+        file = open(ruta, "w+")
+        if (len(data.shape) == 2):
+            cantidad_training = data.shape[1]*porcentaje_training/100
+            for fila in data:
+                contador_training = 0
+                for value in fila:
+                    contador_training += 1
+                    file.write(str(value))
+                    file.write(",")
+                    if(contador_training >= cantidad_training):
+                        break
+                file.write("\n")
+        if (len(data.shape) == 1):
+            cantidad_training = 808
+            contador_training = 0
+            for value in data:
+                contador_training += 1
+                file.write(str(value))
+                file.write(",")
+                if(contador_training >= cantidad_training):
+                    break
+            file.write("\n")
+    except:
+        print("error en generar_train")
+
+def generar_test(data, ruta):
+    print('generando archivo ' + ruta)
+    try:
+        file = open(ruta, "w+")
+        if (len(data.shape) == 2):
+            for fila in data:
+                for value in fila:
+                    file.write(str(value))
+                    file.write(",")
+            file.write("\n")
+        if (len(data.shape) == 1):
+            for value in data:
+                file.write(str(value))
+                file.write(",")
+            file.write("\n")
+    except:
+        print("error en generar_test")
+
 if __name__ == "__main__":
     result_x = csv_to_matrix("./data/x_input.csv")
     result_y = csv_to_matrix("./data/y_output.csv")
-    result_x = random_reorder(result_x)
-    result_y = random_reorder(result_y)
-    print(result_y)
+    p,hn,C = get_config()
+    result_x, result_y = random_reorder(result_x, result_y)
     result_x = normalizer(result_x)
     result_y = normalizer(result_y)
-    print(result_y)
+    generar_train(result_x, p, "./data/train_x.csv")
+    generar_train(result_y, p, "./data/train_y.csv")
+    generar_test(result_x, "./data/test_x.csv")
+    generar_test(result_y, "./data/test_y.csv")
