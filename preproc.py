@@ -1,11 +1,8 @@
 import csv
 import numpy
+import my_utility as ut
 from random import randint
 
-def csv_to_matrix(ruta):
-    file = open(ruta)
-    numpy_array = numpy.loadtxt(file, delimiter=",")
-    return numpy_array
 
 def random_reorder(data_x, data_y):
     print('reordenando')
@@ -42,13 +39,7 @@ def normalizer(data):
         normalized_data = list(map(lambda value: ((value - min) / (max - min)) * (b - a) + a, data))
         normalized_data = numpy.array(normalized_data)
     return normalized_data
-
-def get_config():
-  config = csv_to_matrix("./data/config.csv")
-  p = config[0]
-  hn = config[1]
-  C = config[2]
-  return p,hn,C
+ 
 
 def generar_train(data, porcentaje_training,ruta):
     print('generando archivo ' + ruta)
@@ -97,9 +88,9 @@ def generar_test(data, ruta):
         print("error en generar_test")
 
 if __name__ == "__main__":
-    result_x = csv_to_matrix("./data/x_input.csv")
-    result_y = csv_to_matrix("./data/y_output.csv")
-    p,hn,C = get_config()
+    result_x = ut.csv_to_matrix("./data/x_input.csv")
+    result_y = ut.csv_to_matrix("./data/y_output.csv")
+    p,hn,C = ut.get_config()
     result_x, result_y = random_reorder(result_x, result_y)
     result_x = normalizer(result_x)
     result_y = normalizer(result_y)
