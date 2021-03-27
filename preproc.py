@@ -25,65 +25,45 @@ def normalizer(data):
     
     try:
         """ iterando en las filas de la matriz"""
-        normalized_data = []
-        for fila in data:
-            max = numpy.amax(fila)
-            min = numpy.amin(fila)
-            fila_normalizada = list(map(lambda value: ((value - min) / (max - min)) * (b - a) + a, fila))
-            normalized_data.append(fila_normalizada)
-            #print(list(fila_normalizada))
-        normalized_data = numpy.array(normalized_data)
+        if (len(data.shape) == 2):
+          normalized_data = []
+          for fila in data:
+              max = numpy.amax(fila)
+              min = numpy.amin(fila)
+              fila_normalizada = list(map(lambda value: ((value - min) / (max - min)) * (b - a) + a, fila))
+              normalized_data.append(fila_normalizada)
+              #print(list(fila_normalizada))
+          normalized_data = numpy.array(normalized_data)
+        elif (len(data.shape) == 1):
+          max = numpy.amax(data)
+          min = numpy.amin(data)
+          normalized_data = list(map(lambda value: ((value - min) / (max - min)) * (b - a) + a, data))
+          normalized_data = numpy.array(normalized_data)
     except:
-        max = numpy.amax(data)
-        min = numpy.amin(data)
-        normalized_data = list(map(lambda value: ((value - min) / (max - min)) * (b - a) + a, data))
-        normalized_data = numpy.array(normalized_data)
+       print("error en normalizer")
     return normalized_data
  
 
 def generar_train(data, porcentaje_training,ruta):
     print('generando archivo ' + ruta)
+    if (len(data.shape) == 2):
+      data.shape
+      cantidad_training = int(data.shape[1] * porcentaje_training)
+      data = data[0:data.shape[0], 0:cantidad_training]
+    elif (len(data.shape) == 1):
+      cantidad_training = int(data.shape[0] * porcentaje_training)
+      data = data[0:cantidad_training]
     try:
         file = open(ruta, "w+")
-        if (len(data.shape) == 2):
-            cantidad_training = data.shape[1]*porcentaje_training/100
-            for fila in data:
-                contador_training = 0
-                for value in fila:
-                    contador_training += 1
-                    file.write(str(value))
-                    file.write(",")
-                    if(contador_training >= cantidad_training):
-                        break
-                file.write("\n")
-        if (len(data.shape) == 1):
-            cantidad_training = 808
-            contador_training = 0
-            for value in data:
-                contador_training += 1
-                file.write(str(value))
-                file.write(",")
-                if(contador_training >= cantidad_training):
-                    break
-            file.write("\n")
+        numpy.savetxt(ruta, data, delimiter=",")
     except:
         print("error en generar_train")
 
 def generar_test(data, ruta):
     print('generando archivo ' + ruta)
     try:
-        file = open(ruta, "w+")
-        if (len(data.shape) == 2):
-            for fila in data:
-                for value in fila:
-                    file.write(str(value))
-                    file.write(",")
-            file.write("\n")
-        if (len(data.shape) == 1):
-            for value in data:
-                file.write(str(value))
-                file.write(",")
-            file.write("\n")
+      file = open(ruta, "w+")
+      numpy.savetxt(ruta, data, delimiter=",")
     except:
         print("error en generar_test")
 
