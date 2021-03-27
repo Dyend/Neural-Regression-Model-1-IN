@@ -36,3 +36,36 @@ def generar_pesos(w1,w2):
 def cargar_pesos():
   b = np.load('./data/pesos.npz')
   return b['matrixw1'],b['matrixw2']
+
+def snn_ff(xv,w1,w2):
+  zv = np.dot(w1,xv)
+  a1 = (1/(1+np.exp(-zv)))
+  a2 = np.dot(w2,a1)
+  return a2
+
+def metricas(yv,zv):
+
+  mae = abs(yv - zv).mean()
+  mse = (np.square(yv - zv)).mean()
+  rmse = math.sqrt(mse)
+  r2 = 1-((yv - zv).var()/yv.var())
+  print("MAE:",mae)
+  print("MSE:",mse)
+  print("RMSE:",rmse)
+  print("R2:",r2)
+  generar_metricas(mae,rmse,r2)
+
+def generar_metricas(mae,rmse,r2):
+  ruta = './data/metrica.csv'
+  metrica_data = [mae,rmse,r2]
+  print(metrica_data)
+  file = open(ruta, "w+")
+  numpy.savetxt(ruta, metrica_data, delimiter=",")
+
+def generar_costo(yv,zv):
+  ruta = './data/costo.csv'
+  file = open(ruta, "w+")
+  costos_data = []
+  costos_data.append(yv)
+  costos_data.append(zv)
+  numpy.savetxt(ruta, costos_data, delimiter=",")
