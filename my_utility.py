@@ -2,7 +2,7 @@ import csv
 import numpy
 import random
 import math
-
+import numpy as np
 
 
 def get_config():
@@ -26,3 +26,13 @@ def iniW(hn,n0):
           row.append(random.random() * 2 * r - r)
       matrix.append(row)
   return matrix
+
+
+
+
+def generar_pesos(w1,w2):
+  np.savez_compressed('./data/pesos.npz', matrixw1=w1, matrixw2=w2)
+
+def cargar_pesos():
+  b = np.load('./data/pesos.npz')
+  return b['matrixw1'],b['matrixw2']

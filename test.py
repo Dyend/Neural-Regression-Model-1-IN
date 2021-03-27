@@ -1,6 +1,8 @@
 def main():
-  inp = "text_x.csv"
-  out = "test_y.csv"
-  file_w = 'pesos.npz'
-  xv,yv = ut.load_data_txt(inp,out)
-  w1,w2 = ut.
+  inp = "./data/text_x.csv"
+  out = "./data/test_y.csv"
+  xv = ut.csv_to_matrix(inp)
+  yv = ut.csv_to_matrix(out)
+  w1,w2 = ut.cargar_pesos()
+  zv = ut.snn_ff(xv,w1,w2)
+  ut.metricas(yv,zv)

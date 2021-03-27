@@ -28,8 +28,6 @@ if __name__ == "__main__":
   xe = ut.csv_to_matrix(inp)
   ye = ut.csv_to_matrix(out)
   w1,w2 = train_snn(xe,ye,hn,C)
-  print(w1)
-  print(w2)
-  #ut.save_w_npy(w1,w2)
+  ut.generar_pesos(w1,w2)
 
   
