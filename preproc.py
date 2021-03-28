@@ -47,11 +47,11 @@ def normalizer(data):
 def generar_train(data, porcentaje_training,ruta):
     print('generando archivo ' + ruta)
     if (len(data.shape) == 2):
-      data.shape
-      cantidad_training = int(data.shape[1] * porcentaje_training)
+      cantidad_training = int(data.shape[1] * porcentaje_training/100)
+      print(cantidad_training)
       data = data[0:data.shape[0], 0:cantidad_training]
     elif (len(data.shape) == 1):
-      cantidad_training = int(data.shape[0] * porcentaje_training)
+      cantidad_training = int(data.shape[0] * porcentaje_training/100)
       data = data[0:cantidad_training]
     try:
         file = open(ruta, "w+")
