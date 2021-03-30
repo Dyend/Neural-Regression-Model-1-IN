@@ -65,7 +65,7 @@ def generar_metricas(mae,rmse,r2):
 def generar_costo(yv,zv):
   ruta = './data/costo.csv'
   file = open(ruta, "w+")
-  costos_data = []
-  costos_data.append(yv)
-  costos_data.append(zv)
-  numpy.savetxt(ruta, costos_data, delimiter=",")
+  yv = yv.reshape(-1, 1)
+  zv = zv.reshape(-1, 1)
+  costos_data = np.hstack((yv,zv))
+  numpy.savetxt(ruta, costos_data, delimiter=" ")
