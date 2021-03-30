@@ -68,4 +68,4 @@ def generar_costo(yv,zv):
   yv = yv.reshape(-1, 1)
   zv = zv.reshape(-1, 1)
   costos_data = np.hstack((yv,zv))
-  numpy.savetxt(ruta, costos_data, delimiter=" ")
+  numpy.savetxt(ruta, costos_data, delimiter=",")
