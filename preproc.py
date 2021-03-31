@@ -58,8 +58,14 @@ def generar_train(data, porcentaje_training,ruta):
     except:
         print("error en generar_train")
 
-def generar_test(data, ruta):
+def generar_test(data, porcentaje_training, ruta):
     print('generando archivo ' + ruta)
+    if (len(data.shape) == 2):
+      cantidad_training = int(data.shape[1] * porcentaje_training/100)
+      data = data[0:data.shape[0], cantidad_training:data.shape[1]]
+    elif (len(data.shape) == 1):
+      cantidad_training = int(data.shape[0] * porcentaje_training/100)
+      data = data[cantidad_training:data.shape[0]]
     try:
       file = open(ruta, "w+")
       numpy.savetxt(ruta, data, delimiter=",")
@@ -75,5 +81,5 @@ if __name__ == "__main__":
     result_y = normalizer(result_y)
     generar_train(result_x, p, "./data/train_x.csv")
     generar_train(result_y, p, "./data/train_y.csv")
-    generar_test(result_x, "./data/test_x.csv")
-    generar_test(result_y, "./data/test_y.csv")
+    generar_test(result_x, p, "./data/test_x.csv")
+    generar_test(result_y, p, "./data/test_y.csv")
