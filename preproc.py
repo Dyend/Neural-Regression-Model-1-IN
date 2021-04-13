@@ -75,7 +75,7 @@ def generar_test(data, porcentaje_training, ruta):
 if __name__ == "__main__":
     result_x = ut.csv_to_matrix("./data/x_input.csv")
     result_y = ut.csv_to_matrix("./data/y_output.csv")
-    p,hn,C = ut.get_config()
+    p, hn, C, mu, maxIter = ut.get_config()
     result_x, result_y = random_reorder(result_x, result_y)
     result_x = normalizer(result_x)
     result_y = normalizer(result_y)

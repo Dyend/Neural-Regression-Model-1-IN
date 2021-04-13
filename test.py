@@ -8,6 +8,6 @@ if __name__ == "__main__":
   xv = ut.csv_to_matrix(inp)
   yv = ut.csv_to_matrix(out)
   w1,w2 = ut.cargar_pesos()
-  zv = ut.snn_ff(xv,w1,w2)
+  zv = ut.snn_ff_old(xv,w1,w2)
   ut.metricas(yv,zv)
   ut.generar_costo(yv,zv)
