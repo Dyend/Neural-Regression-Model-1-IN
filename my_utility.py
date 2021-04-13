@@ -51,15 +51,15 @@ def snn_ff(xv,w1,w2):
   zv = np.dot(w1,xv)
   a1 = (1/(1+np.exp(-zv)))
   z2 = np.dot(w2,a1)
-  a2 = (1/(1+np.exp(-z2)))
+  a2 = (1/(1+np.exp(-z2 )))
   a.append(xv)
   a.append(a1)
   a.append(a2)
   return a
 
 def derivate_act(a):
-  z = numpy.log((1/a)-1)
-  derivate_act = (-(np.exp(-z)/np.square((1+np.exp(-z)))))
+  z = numpy.log((1/a)-1)*-1
+  derivate_act = (np.exp(-z)/np.square((1+np.exp(-z))))
   return derivate_act
 
 def snn_bw(act, ye, w1, w2, mu):
