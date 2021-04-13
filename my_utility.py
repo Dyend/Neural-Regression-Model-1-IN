@@ -88,16 +88,24 @@ def metricas(yv,zv):
   generar_metricas(mae,rmse,r2)
 
 def generar_metricas(mae,rmse,r2):
-  ruta = './data/metrica.csv'
+  ruta = './data/test_metrica.csv'
   metrica_data = [mae,rmse,r2]
   print(metrica_data)
   file = open(ruta, "w+")
   numpy.savetxt(ruta, metrica_data, delimiter=",")
 
 def generar_costo(yv,zv):
-  ruta = './data/costo.csv'
+  ruta = './data/test_estima.csv'
   file = open(ruta, "w+")
   yv = yv.reshape(-1, 1)
   zv = zv.reshape(-1, 1)
   costos_data = np.hstack((yv,zv))
   numpy.savetxt(ruta, costos_data, delimiter=",")
+
+def generar_mse(mse):
+  ruta = './data/train_costo.csv'
+  train_costo = mse
+  with open(ruta, 'w') as f:
+    writer = csv.writer(f)
+    for val in mse:
+        writer.writerow([val])

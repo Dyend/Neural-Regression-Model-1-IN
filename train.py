@@ -42,5 +42,5 @@ if __name__ == "__main__":
   #w1,w2 = train_snn_old(xe,ye,hn,C)
   w1, w2, mse = train_snn(xe,ye,hn, mu, maxIter)
   ut.generar_pesos(w1,w2)
-
+  ut.generar_mse(mse)
   
