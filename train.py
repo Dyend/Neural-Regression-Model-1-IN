@@ -1,46 +1,56 @@
-import numpy as np
+# Deep-Learning:Training via BP+Pseudo-inverse
+
+import numpy      as np
 import my_utility as ut
+	
+# Softmax's training
+def train_softmax(x,y,param):
+    w = ut.iniW(y.shape[0],x.shape[0])
+    Costos = []
+    print(x)
+    print(x.shape)
+    for i in range(1,int(param[0])):
+        gradW, costo = ut.softmax_grad(w,x,y,param[2])
+        w = w - (param[1] * gradW)
+        Costos.append(costo)
+    return(w,Costos)
 
+# AE's Training 
 
-def p_inversa(a1,ye,hn,C):
-  yh = np.dot(ye,a1.T)
-  ai = np.dot(a1,a1.T)+ np.eye(int(hn))/C
-  p_inv = np.linalg.pinv(ai)
-  w2 = np.dot(yh,p_inv)
-  return w2
+def train_ae(x,hnode,param):
+    #Inicialisamos W1
+    w1 = ut.iniW(param[hnode],x.shape[0])
+    for i in range(1, param[3]):
+        #Obtenemos el el peso W2 con la funcion pinv_ae
+        z = np.dot(w1,x)
+        a1 = ut.act_sigmoid(z)
+        w2 = ut.pinv_ae(a1,x,param[hnode],param[2])
 
+        #Modificamos el peso w1 con la funcion backward_ae
+        z2 = np.dot(w2,a1)
+        act = []
+        act.append(x)
+        act.append(a1)
+        act.append(z2)
+        w1 = ut.backward_ae(act, x, w1, w2, param[1])
+        return(w1)
 
+def train_sae(x,param):
+    W={}
+    for hn in range(4,len(param)):   #Number of AEs     
+        w1       = train_ae(x,hn,param)
+        W[hn-4]  = w1
+        x        = ut.act_sigmoid(np.dot(w1,x))
+    return(W,x) 
+   
+# Beginning ...
+def main():
+    par_sae,par_sft = ut.load_config()    
+    xe              = ut.load_data_csv('./data/train_x.csv')
+    ye              = ut.load_data_csv('./data/train_y.csv')
+    W,Xr            = train_sae(xe,par_sae)
+    Ws, cost        = train_softmax(Xr,ye,par_sft)
+    ut.save_w_dl(W,Ws,cost,'./data/w_dl.npz','./data/cost_softmax.csv')
+if __name__ == '__main__':   
+	 main()
 
-def train_snn_old(xe,ye,hn,C):
-  n0 = xe.shape[0]
-  w1 = ut.iniW(hn,n0)
-  z = np.dot(w1,xe)
-  a1 = 1/(1+np.exp(-z)) 
-  w2 = p_inversa(a1, ye, hn, C)
-  return (w1,w2) #w1 capa oculta w2 capa de salida 
-
-def train_snn(xe, ye, nh, mu, MaxIter):
-  n0 = xe.shape[0]
-  w1 = ut.iniW(nh,n0)
-  w2 = ut.iniW(1,nh)
-  mse = []
-  Mse_l = []
-  for i in range(int(MaxIter)):
-    act = ut.snn_ff(xe, w1, w2)
-    w1, w2, cost = ut.snn_bw(act, ye, w1, w2, mu)
-    print(cost)
-    mse.append(cost)
-  return w1, w2, mse
-
-
-if __name__ == "__main__":
-  inp = "./data/train_x.csv"
-  out = "./data/train_y.csv"
-  p,hn,C, mu, maxIter = ut.get_config()
-  xe = ut.csv_to_matrix(inp)
-  ye = ut.csv_to_matrix(out)
-  #w1,w2 = train_snn_old(xe,ye,hn,C)
-  w1, w2, mse = train_snn(xe,ye,hn, mu, maxIter)
-  ut.generar_pesos(w1,w2)
-  ut.generar_mse(mse)
-  

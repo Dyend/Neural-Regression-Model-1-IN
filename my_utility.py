@@ -1,111 +1,127 @@
-import csv
-import numpy
-import random
-import math
-import numpy as np
+# My Utility : auxiliars functions
+import pandas as pd
+import numpy  as np
 
+# Calculate Pseudo-inverse
+def pinv_ae(a1,x,hn,C):
+  xh = np.dot(x,a1.T)
+  ai = np.dot(a1,a1.T)+ np.eye(int(hn))/C
+  p_inv = np.linalg.pinv(ai)
+  w2 = np.dot(xh,p_inv)
+  return w2
 
-def get_config():
-  config = csv_to_matrix("./data/config.csv")
-  p = config[0]
-  hn = config[1]
-  C = config[2]
-  mu = config[3]
-  maxIter = config[4]
-  return p, hn, C, mu, maxIter
+#AE's Feed-Backward
+def backward_ae(act, x, w1, w2, mu):
 
-def csv_to_matrix(ruta):
-  file = open(ruta)
-  numpy_array = numpy.loadtxt(file, delimiter=",")
-  return numpy_array
-
-def iniW(hn,n0):
-  r = math.sqrt( 6 / (hn+n0) )
-  matrix=[]
-  for i in range(0, int(hn)):
-      row=[]
-      for j in range(0, int(n0)):
-          row.append(random.random() * 2 * r - r)
-      matrix.append(row)
-  matrix = numpy.array(matrix)
-  return matrix
-
-
-
-
-def generar_pesos(w1,w2):
-  np.savez_compressed('./data/pesos.npz', matrixw1=w1, matrixw2=w2)
-
-def cargar_pesos():
-  b = np.load('./data/pesos.npz')
-  return b['matrixw1'],b['matrixw2']
-
-def snn_ff_old(xv,w1,w2):
-  zv = np.dot(w1,xv)
-  a1 = (1/(1+np.exp(-zv)))
-  z2 = np.dot(w2,a1)
-  return z2
-
-def snn_ff(xv,w1,w2):
-  a = []
-  zv = np.dot(w1,xv)
-  a1 = (1/(1+np.exp(-zv)))
-  z2 = np.dot(w2,a1)
-  a2 = (1/(1+np.exp(-z2 )))
-  a.append(xv)
-  a.append(a1)
-  a.append(a2)
-  return a
-
-def derivate_act(a):
-  z = numpy.log((1/a)-1)*-1
-  derivate_act = (np.exp(-z)/np.square((1+np.exp(-z))))
-  return derivate_act
-
-def snn_bw(act, ye, w1, w2, mu):
-
-  e = act[2] - ye
-  Cost = np.mean(e**2)
-  dOut = e * derivate_act(act[2])
-  gradW2 = np.dot(dOut, act[1].T)
-  dHidden = np.dot(w2.T, dOut) * derivate_act(act[1])
+  e = act[2] - x
+  #Cost = np.mean(e**2)/(2*e.shape[1])
+  #dOut = e * derivate_act(act[2])
+  #gradW2 = np.dot(dOut, act[1].T)
+  dHidden = np.dot(w2.T, e) * derivate_act(act[1])
   gradW1 = np.dot(dHidden, act[0].T)
-  w2 = w2 - mu * gradW2
   w1 = w1 - mu * gradW1
+  return w1
 
-  return w1, w2, Cost
+    
+#Activation function
+def act_sigmoid(z):
+    return(1/(1+np.exp(-z)))   
 
+# Derivate of the activation funciton
+def derivate_act(a):
+    return(a*(1-a))
+
+
+#Forward Softmax
+def softmax(z):
+    z = np.exp(z-np.max(z))
+    an = z / z.sum(axis=0, keepdims=True)
+    return(an)
+
+
+# Softmax's gradient
+def softmax_grad(w,x,y,lambd):
+    #softmax
+    z = np.dot(w,x)
+    an = softmax(z)
+
+    #Calculo del Costo
+    divN = (-1/x.shape[1])
+    tdotlogan = y * np.log(an)
+    lambdotW = (lambd/2) * np.linalg.norm(w,2)
+    cost = divN * np.sum(np.sum(tdotlogan,axis=0, keepdims=True))
+    Cost = cost + lambdotW
+    #Calculo del Gradiente
+    error = (y-an)
+    errordotX = np.dot(error,x.T)
+    lambadotW = lambd * w
+    gradW = divN * errordotX + lambadotW
+    print('Costo: ',Cost)
+    return(gradW, Cost)
+
+
+# Initialize weights
+def iniW(next,prev):
+    r  = np.sqrt(6/(next+ prev))
+    w  = np.random.rand(next,prev)
+    w  = w*2*r-r
+    return(w)
+
+import sys
+#Measure
 def metricas(yv,zv):
+    zv = (zv == zv.max(axis=0, keepdims=True)).astype(int)
+    print('\nPrediccion en binario\n', zv)
+    print('\nValor deseado en binario\n', yv)
+    CM = pd.crosstab(yv.tolist(),zv.tolist())
+    acc = accuracy(CM)
+    print('\nAccuracy: ',acc,'\n')
+    return()
 
-  mae = abs(yv - zv).mean()
-  mse = (np.square(yv - zv)).mean()
-  rmse = math.sqrt(mse)
-  r2 = 1-((yv - zv).var()/yv.var())
-  print("MAE:",mae)
-  print("MSE:",mse)
-  print("RMSE:",rmse)
-  print("R2:",r2)
-  generar_metricas(mae,rmse,r2)
+def accuracy(CM):
+    acc = np.diag(CM).sum() / CM.to_numpy().sum()
+    return(acc)
+#------------------------------------------------------------------------
+#      LOAD-SAVE
+#-----------------------------------------------------------------------
+# Configuration of the DL: 
+def load_config():      
+    par = np.genfromtxt("./data/param_sae.csv",delimiter=',')    
+    par_sae=[]
+    par_sae.append(np.float(par[0])) # % train
+    par_sae.append(np.float(par[1])) # Learn rate
+    par_sae.append(np.int16(par[2])) # Penal. C
+    par_sae.append(np.int16(par[3])) # MaxIter
+    for i in range(4,len(par)):
+        par_sae.append(np.int16(par[i]))
+    par    = np.genfromtxt("./data/param_softmax.csv",delimiter=',')
+    par_sft= []
+    par_sft.append(np.int16(par[0]))   #MaxIters
+    par_sft.append(np.float(par[1]))   #Learning rate
+    par_sft.append(np.float(par[2]))   #Lambda
+    return(par_sae,par_sft)
+# Load data 
+def load_data_csv(fname):
+    x   = pd.read_csv(fname, header = None)
+    x   = np.array(x)   
+    return(x)
 
-def generar_metricas(mae,rmse,r2):
-  ruta = './data/test_metrica.csv'
-  metrica_data = [mae,rmse,r2]
-  print(metrica_data)
-  file = open(ruta, "w+")
-  numpy.savetxt(ruta, metrica_data, delimiter=",")
+# save weights of the DL in numpy 
+def save_w_dl(W,Ws,cost,ruta_peso,ruta_costo):
+    #Se guardan los pesos en formato npz
+    W[len(W)]=Ws
+    savez_dict = dict()
+    for i in range(len(W)):
+        key = str(i)
+        savez_dict[key] = W[i] 
+    np.savez_compressed(ruta_peso, **savez_dict)
+    load_w_dl(ruta_peso)
+    #Se guardan los costos en formato csv
+    np.savetxt(ruta_costo, np.array(cost),delimiter=',')
+    return()  
+    
 
-def generar_costo(yv,zv):
-  ruta = './data/test_estima.csv'
-  file = open(ruta, "w+")
-  yv = yv.reshape(-1, 1)
-  zv = zv.reshape(-1, 1)
-  costos_data = np.hstack((yv,zv))
-  numpy.savetxt(ruta, costos_data, delimiter=",")
-
-def generar_mse(mse):
-  ruta = './data/train_costo.csv'
-  train_costo = mse
-  with open(ruta, 'w') as f:
-    writer = csv.writer(f)
-    for val in mse:
-        writer.writerow([val])
+#load weight of the DL in numpy 
+def load_w_dl(ruta_peso):
+    data = np.load(ruta_peso)
+    return(data)    
