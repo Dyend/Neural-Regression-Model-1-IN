@@ -60,9 +60,25 @@ def randW(next,prev):
     w  = w*2*r-r
     return(w)
 
+
+
 def mat0(next,prev):
-    v  = np.zeros((next,prev),dtype=np.float64)
+    v  = np.zeros((next,prev))
     return(v)
+
+# Initialize weights of the Deep-AE
+def ini_WV(input, nodesEnc):
+    W = []
+    V = []
+    aux = input
+    for i in range(len(nodesEnc)):
+        W.append(randW(nodesEnc[i], aux))
+        V.append(mat0(nodesEnc[i], aux))
+        aux = nodesEnc[i]
+    for i in reversed(W):
+        W.append(randW(i.shape[1], i.shape[0]))
+        V.append(mat0(i.shape[1], i.shape[0]))
+    return(W,V)
 
 def updW_sgd(w, gradW, mu):
     L = len(w)
@@ -87,28 +103,14 @@ def updW_dae(w,v,gW,mu):
 #    
 # Update Softmax's weight with RMSprop
 def updW_softmax(w,v,gW,mu):
-    L = len(w)
     E = 10**-10
     B = 0.9
-    for i in range(0, L):
-        mu_k = mu/np.sqrt(v+E)
-        w[i] -= mu_k * gW
-        v[i] = B*v[i] + (1-B)*np.square(gW)
+    mu_k = mu/np.sqrt(v+E)
+    w  -= mu_k * gW
+    v = B*v + (1-B)*np.square(gW)
     return(w,v)
 
-# Initialize weights of the Deep-AE
-def ini_WV(input, nodesEnc):
-    W = []
-    V = []
-    aux = input
-    for i in range(len(nodesEnc)):
-        W.append(randW(nodesEnc[i], aux))
-        V.append(mat0(nodesEnc[i], aux))
-        aux = nodesEnc[i]
-    for i in reversed(W):
-        W.append(randW(i.shape[1], i.shape[0]))
-        V.append(mat0(i.shape[1], i.shape[0]))
-    return(W,V)
+
 
 
 def softmax(z):
@@ -126,13 +128,15 @@ def softmax_grad(x, y, w):
     tdotlogan = y * np.log(an)
     #lambdotW = (lambW/2) * np.linalg.norm(w,2)
     cost = divN * np.sum(np.sum(tdotlogan,axis=0, keepdims=True))
-    Cost = cost# + lambdotW
+    Cost = cost # + lambdotW
 
     #Calculo del Gradiente
     error = (y-an)
     errordotX = np.dot(error,x.T)
     #lambadotW = lambW * w
-    gradW = divN * errordotX #+ lambadotW
+    gradW = divN * errordotX # + lambadotW
+
+    #gradW = -1 / N * ((T - A) * x.T)
 
     return gradW, Cost
 
@@ -173,7 +177,7 @@ def load_config():
     par = np.genfromtxt("./data/param_dae.csv",delimiter=',',dtype=None)    
     par_sae=[]    
     par_sae.append(np.float(par[0])) # Learn rate
-    par_sae.append(np.int16(par[1])) # miniBatchSize
+    par_sae.append(np.float(par[1])) # miniBatchSize
     par_sae.append(np.int16(par[2])) # MaxIter
     for i in range(3,len(par)):
         par_sae.append(np.int16(par[i]))
@@ -182,6 +186,7 @@ def load_config():
     par_sft.append(np.int16(par[0]))   #MaxIters
     par_sft.append(np.float(par[1]))   #Learning     
     return(par_sae,par_sft)
+
 # Load data 
 def load_data_csv(fname):
     x     = pd.read_csv(fname, header = None)

@@ -6,18 +6,21 @@ import my_utility as ut
 	
 # Softmax's training
 def train_softmax(x,y,param):
-    w,v = ut.ini_WV(x.shape[0], param[3:]) #completar
+    w = ut.randW(y.shape[0], x.shape[0])
+    v = ut.mat0(y.shape[0], x.shape[0])
     costo = []
     for iter in range(param[0]):
-        gW,cost = ut.softmax_grad(x,y,w) 
+        gW,cost = ut.softmax_grad(x,y,w)
         costo.append(cost)
         w,v     = ut.updW_softmax(w,v,gW,param[1])                       
     return(w,costo)
 
 #gets miniBatch
-def get_miniBatch(i,x,bsize):
-    z=x[:,i*bsize:(i+1)*bsize]
-    return(z)
+def get_miniBatch(i, x, bsize):
+    bsize = int(bsize)
+    start_idx = i * bsize
+    xe = x[:, start_idx: start_idx + bsize]
+    return (xe)
 
 # Deep-AE's Training 
 def train_dae(x,W,V,mu,numBatch,BatchSize):
@@ -33,7 +36,7 @@ def train_dl(x,param):
     W,V = ut.ini_WV(x.shape[0], param[3:])   # completar
     numBatch = np.int16(np.floor(x.shape[1]/param[1]))        
     for Iter in range(param[2]):        
-        xe  = x[:,np.random.permutation(x.shape[1])]        
+        xe  = x[:,np.random.permutation(x.shape[1])]
         W   = train_dae(xe,W,V,param[0],numBatch,param[1])            
     return(W) 
    
