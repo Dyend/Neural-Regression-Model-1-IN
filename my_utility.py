@@ -62,7 +62,6 @@ def randW(next,prev):
 
 def mat0(next,prev):
     v  = np.zeros((next,prev),dtype=np.float64)
-    print (v)
     return(v)
 
 def updW_sgd(w, gradW, mu):
@@ -79,23 +78,22 @@ def updW_dae(w,v,gW,mu):
     L = len(w)
     E = 10**-10
     B = 0.9
-    v = np.array(v)
-    print(mu)
     for i in range(0, L):
-        aux = v+E
+        aux = v[i]+E
         mu_k = mu/np.sqrt(aux)
         w[i] -= mu_k * gW[i]
-        v = B*v + (1-B)*np.square(gW[i])
+        v[i] = B*v[i] + (1-B)*np.square(gW[i])
     return(w,v)
 #    
 # Update Softmax's weight with RMSprop
 def updW_softmax(w,v,gW,mu):
+    L = len(w)
     E = 10**-10
     B = 0.9
-    mu_k = mu/np.sqrt(v+E)
-    w -= mu_k * gW
-    v = B*v + (1-B)*np.square(gW)
-
+    for i in range(0, L):
+        mu_k = mu/np.sqrt(v+E)
+        w[i] -= mu_k * gW
+        v[i] = B*v[i] + (1-B)*np.square(gW)
     return(w,v)
 
 # Initialize weights of the Deep-AE
@@ -134,7 +132,7 @@ def softmax_grad(x, y, w):
     error = (y-an)
     errordotX = np.dot(error,x.T)
     #lambadotW = lambW * w
-    gradW = divN * errordotX * w #+ lambadotW
+    gradW = divN * errordotX #+ lambadotW
 
     return gradW, Cost
 
