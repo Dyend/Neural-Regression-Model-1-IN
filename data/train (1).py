@@ -6,7 +6,7 @@ import my_utility as ut
 	
 # Softmax's training
 def train_softmax(x,y,param):
-    w,v = ut.ini_WV(x.shape[0], param[3:]) #completar
+    w,v = ini_WV( ...) #completar
     costo = []
     for iter in range(param[0]):
         gW,cost = ut.softmax_grad(x,y,w) 
@@ -25,12 +25,12 @@ def train_dae(x,W,V,mu,numBatch,BatchSize):
         xe   = get_miniBatch(i,x,BatchSize)        
         Act  = ut.forward_dae(xe,W)              
         gW   = ut.grad_bp_dae(Act,W) 
-        W,V  = ut.updW_dae(W,V,gW,mu)
+        W,V  = ut.updW_dae(W,V,gW,mu);  
     return(W)
 
 #Deep Learning: Training 
 def train_dl(x,param):
-    W,V = ut.ini_WV(x.shape[0], param[3:])   # completar
+    W,V = ini_WV(...)   # completar
     numBatch = np.int16(np.floor(x.shape[1]/param[1]))        
     for Iter in range(param[2]):        
         xe  = x[:,np.random.permutation(x.shape[1])]        
@@ -40,12 +40,12 @@ def train_dl(x,param):
 # Beginning ...
 def main():
     par_dae,par_sft = ut.load_config()    
-    xe              = ut.load_data_csv('./data/train_x.csv')    
-    ye              = ut.load_data_csv('./data/train_y.csv')    
+    xe              = ut.load_data_csv('train_x.csv')    
+    ye              = ut.load_data_csv('train_y.csv')    
     W               = train_dl(xe,par_dae) 
     Xr              = ut.encoder(xe,W)
     Ws, cost        = train_softmax(Xr,ye,par_sft)
-    ut.save_w_dl(W,Ws,'./data/w_dl.npz',cost,'./data/costo_softmax.csv')
+    ut.save_w_dl(W,Ws,'w_dl.npz',cost,'costo_softmax.csv')
        
 if __name__ == '__main__':   
 	 main()

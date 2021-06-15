@@ -40,13 +40,7 @@ def deriva_sigmoid(a):
 
 
 
-def updW_sgd(w, gradW, mu):
-    L = len(w)
-    for i in range(0, L):
-        tau = mu/len(w)
-        mu_k = mu/(1+np.dot(tau, (i+1)))
-        w[i] -= mu_k * gradW[i]
-    return w
+
 
 
 def iniW(input, nodesEnc):
@@ -66,13 +60,65 @@ def randW(next,prev):
     w  = w*2*r-r
     return(w)
 
+def mat0(next,prev):
+    v  = np.zeros((next,prev),dtype=np.float64)
+    print (v)
+    return(v)
+
+def updW_sgd(w, gradW, mu):
+    L = len(w)
+    for i in range(0, L):
+        tau = mu/len(w)
+        mu_k = mu/(1+np.dot(tau, (i+1)))
+        w[i] -= mu_k * gradW[i]
+    return w
+
+
+# Update DAE's weight with RMSprop
+def updW_dae(w,v,gW,mu):    
+    L = len(w)
+    E = 10**-10
+    B = 0.9
+    v = np.array(v)
+    print(mu)
+    for i in range(0, L):
+        aux = v+E
+        mu_k = mu/np.sqrt(aux)
+        w[i] -= mu_k * gW[i]
+        v = B*v + (1-B)*np.square(gW[i])
+    return(w,v)
+#    
+# Update Softmax's weight with RMSprop
+def updW_softmax(w,v,gW,mu):
+    E = 10**-10
+    B = 0.9
+    mu_k = mu/np.sqrt(v+E)
+    w -= mu_k * gW
+    v = B*v + (1-B)*np.square(gW)
+
+    return(w,v)
+
+# Initialize weights of the Deep-AE
+def ini_WV(input, nodesEnc):
+    W = []
+    V = []
+    aux = input
+    for i in range(len(nodesEnc)):
+        W.append(randW(nodesEnc[i], aux))
+        V.append(mat0(nodesEnc[i], aux))
+        aux = nodesEnc[i]
+    for i in reversed(W):
+        W.append(randW(i.shape[1], i.shape[0]))
+        V.append(mat0(i.shape[1], i.shape[0]))
+    return(W,V)
+
 
 def softmax(z):
     exp_z = np.exp(z-np.max(z))
     return exp_z / exp_z.sum(axis=0, keepdims=True)
 
 
-def softmax_grad(x, y, w, lambW):
+def softmax_grad(x, y, w):
     #softmax
     z = np.dot(w,x)
     an = softmax(z)
@@ -80,15 +126,15 @@ def softmax_grad(x, y, w, lambW):
     #Calculo del Costo
     divN = (-1/x.shape[1])
     tdotlogan = y * np.log(an)
-    lambdotW = (lambW/2) * np.linalg.norm(w,2)
+    #lambdotW = (lambW/2) * np.linalg.norm(w,2)
     cost = divN * np.sum(np.sum(tdotlogan,axis=0, keepdims=True))
-    Cost = cost + lambdotW
+    Cost = cost# + lambdotW
 
     #Calculo del Gradiente
     error = (y-an)
     errordotX = np.dot(error,x.T)
-    lambadotW = lambW * w
-    gradW = divN * errordotX + lambadotW
+    #lambadotW = lambW * w
+    gradW = divN * errordotX * w #+ lambadotW
 
     return gradW, Cost
 
@@ -121,22 +167,28 @@ def metricas(x,y):
     return(Fscore)
 
 
-def load_config():
-    par = np.genfromtxt("./data/param_dae.csv", delimiter=",")
-    par_dae = []
-    par_dae.append(np.float(par[0]))  # Learn rate
-    par_dae.append(np.float(par[1]))  # miniBatchSize
-    par_dae.append(np.int16(par[2]))  # MaxIter
-    for i in range(3, len(par)):
-        par_dae.append(np.int16(par[i]))
-    par = np.genfromtxt("./data/param_softmax.csv", delimiter=",")
-    par_sft = []
-    par_sft.append(np.int16(par[0]))  # MaxIters
-    par_sft.append(np.float(par[1]))  # Learning rate
-    par_sft.append(np.float(par[2]))  # Lambda
-
-    return par_dae, par_sft
-
+#------------------------------------------------------------------------
+#      LOAD-SAVE
+#-----------------------------------------------------------------------
+# Configuration of the SNN
+def load_config():      
+    par = np.genfromtxt("./data/param_dae.csv",delimiter=',',dtype=None)    
+    par_sae=[]    
+    par_sae.append(np.float(par[0])) # Learn rate
+    par_sae.append(np.int16(par[1])) # miniBatchSize
+    par_sae.append(np.int16(par[2])) # MaxIter
+    for i in range(3,len(par)):
+        par_sae.append(np.int16(par[i]))
+    par    = np.genfromtxt("./data/param_softmax.csv",delimiter=',')
+    par_sft= []
+    par_sft.append(np.int16(par[0]))   #MaxIters
+    par_sft.append(np.float(par[1]))   #Learning     
+    return(par_sae,par_sft)
+# Load data 
+def load_data_csv(fname):
+    x     = pd.read_csv(fname, header = None)
+    x     = np.array(x)  
+    return(x)
 
 def load_data_csv(fname):
 
