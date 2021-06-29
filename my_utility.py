@@ -1,7 +1,19 @@
 # My Utility : auxiliars functions
 import pandas as pd
 import numpy  as np
+import math
 
+
+def forward_dae2(x,w):	
+    a = {}
+    a[0] = x
+    L = len(w) - 1
+    n_fw = int(L/2)
+    for i in range(n_fw):
+        x = act_sigmoid(np.dot(w[i], x))
+        a[i + 1] = x
+    a[i+2] = softmax(np.dot(w[L], x))
+    return(a)    
 
 
 def forward_dae(x,w):	
@@ -40,8 +52,42 @@ def deriva_sigmoid(a):
 
 
 
+def grad_bp_dl(a,w,y,x):
+    gradW = {}
+    deltas = {}
+    L = len(w)
+    divN = (-1/w[0].shape[1])
+    error = (y-a[L-2])
+    errordotX = np.dot(error,x.T)
+    gradW[L - 1] = divN * errordotX
+    print(np.shape(w[0]))
+    print(np.shape(x))
+    for i in reversed(range(0, L-1)):
+        divN = (-1/w[i].shape[1])
+        gradW[i] = divN * errordotX
+        print(np.shape(gradW[i]))
+    return(gradW)   
 
+def softmax_grad2(x, y, w):
+    #softmax
+    z = np.dot(w[0],x)
+    an = softmax(z)
+    #Calculo del Costo
+    divN = (-1/x.shape[1])
+    tdotlogan = y * np.log(an)
+    #lambdotW = (lambW/2) * np.linalg.norm(w,2)
+    cost = divN * np.sum(np.sum(tdotlogan,axis=0, keepdims=True))
+    Cost = cost # + lambdotW
 
+    #Calculo del Gradiente
+    error = (y-an)
+    errordotX = np.dot(error,x.T)
+    #lambadotW = lambW * w
+    gradW = divN * errordotX # + lambadotW
+
+    #gradW = -1 / N * ((T - A) * x.T)
+
+    return gradW, Cost
 
 def iniW(input, nodesEnc):
     W = []
@@ -88,6 +134,32 @@ def updW_sgd(w, gradW, mu):
         w[i] -= mu_k * gradW[i]
     return w
 
+def iniWPQ():
+    W = load_w_dl("./data/w_dl.npz")
+    P = []
+    Q = []
+    for i in W:
+        P.append(mat0(i.shape[0], i.shape[1]))
+        Q.append(mat0(i.shape[0], i.shape[1]))
+    return(P,Q,W)
+
+# Update DAE's weight with RMSprop
+def updW_adam(w,P,Q,gW,mu):    
+    L = len(w)
+    E = 10**-8
+    B1 = 0.9
+    B2 = 0.999
+
+    for i in range(0, L):
+        print(i)
+        P[i] = B1*P[i] + (1-B1)*gW[i]
+        Q[i] = B1*Q[i] + (1-B1)*np.square(gW[i])
+        RaizBetas = math.sqrt(1-B2**i)/(1-B1)
+        P_div_Qsqrt = P[i]/np.sqrt(Q[i]+E)
+        gAdam = RaizBetas*P_div_Qsqrt
+        w[i] -= mu * gAdam
+    return(w,P,Q)
+
 
 # Update DAE's weight with RMSprop
 def updW_dae(w,v,gW,mu):    
@@ -95,19 +167,19 @@ def updW_dae(w,v,gW,mu):
     E = 10**-10
     B = 0.9
     for i in range(0, L):
+        v[i] = B*v[i] + (1-B)*np.square(gW[i])
         aux = v[i]+E
         mu_k = mu/np.sqrt(aux)
         w[i] -= mu_k * gW[i]
-        v[i] = B*v[i] + (1-B)*np.square(gW[i])
     return(w,v)
 #    
 # Update Softmax's weight with RMSprop
 def updW_softmax(w,v,gW,mu):
     E = 10**-10
     B = 0.9
+    v = B*v + (1-B)*np.square(gW)
     mu_k = mu/np.sqrt(v+E)
     w  -= mu_k * gW
-    v = B*v + (1-B)*np.square(gW)
     return(w,v)
 
 
@@ -141,10 +213,26 @@ def softmax_grad(x, y, w):
     return gradW, Cost
 
 
+
+
 def encoder(x, w):
     for i in range(int(len(w)/2)):
         x = act_sigmoid(np.dot(w[i], x))
     return x
+
+def forward_dl(x, w):
+    L = len(w) - 1
+    n_fw = int(L/2)
+    print(L)
+    print(n_fw)
+    for i in range(n_fw):
+        x = ut.act_sigmoid(np.dot(w[i], x))
+    zv = ut.softmax(np.dot(w[L], x))
+
+    return zv
+
+
+
 
 # Métrica
 def metricas(x,y):
@@ -211,3 +299,12 @@ def load_w_dl(nfile):
     weigth = np.load(nfile, allow_pickle=True)
     w = weigth["idx"]
     return w[()]
+
+
+def load_config2():      
+    par = np.genfromtxt("./data/param_dl.csv",delimiter=',',dtype=None)    
+    par_dl=[]    
+    par_dl.append(np.float(par[0])) # Learn rate
+    par_dl.append(np.int16(par[1])) # miniBatch Size
+    par_dl.append(np.int16(par[2])) # MaxIter    
+    return(par_dl)
